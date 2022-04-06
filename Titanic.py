@@ -7,6 +7,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import sklearn
+from time import time
+
+init_time = time()
 
 # %% [markdown]
 # ### Constants
@@ -701,7 +704,7 @@ y_pred_knn = knn_clf.predict(X_dev_scaled)
 # %%
 get_confussion_matrix(y_dev, y_pred_knn)
 
-plt.title("Comfusion Matrix for Logistic Regression", fontsize=15)
+plt.title("Comfusion Matrix for K Nearest Neighbors", fontsize=15)
 plt.show()
 
 # %%
@@ -722,7 +725,7 @@ y_pred_svm = svm_clf.predict(X_dev_scaled)
 # %%
 get_confussion_matrix(y_dev, y_pred_svm)
 
-plt.title("Comfusion Matrix for Logistic Regression", fontsize=15)
+plt.title("Comfusion Matrix for Scaler Vector Classifier", fontsize=15)
 plt.show()
 
 # %%
@@ -743,7 +746,7 @@ y_pred_dcn_tree = dcn_tree_clf.predict(X_dev_scaled)
 # %%
 get_confussion_matrix(y_dev, y_pred_dcn_tree)
 
-plt.title("Comfusion Matrix for Logistic Regression", fontsize=15)
+plt.title("Comfusion Matrix for Decision Tree", fontsize=15)
 plt.show()
 
 # %%
@@ -764,7 +767,7 @@ y_pred_rdm_fst = rdm_fst_clf.predict(X_dev_scaled)
 # %%
 get_confussion_matrix(y_dev, y_pred_rdm_fst)
 
-plt.title("Comfusion Matrix for Logistic Regression", fontsize=15)
+plt.title("Comfusion Matrix for Random Forest", fontsize=15)
 plt.show()
 
 # %%
@@ -838,19 +841,23 @@ plt.title("Model Comparison Table", fontsize=15)
 # %%
 from sklearn.model_selection import KFold, GridSearchCV
 
+# %%
+X_scaled    = np.concatenate([X_train_scaled, X_dev_scaled])
+y           = np.concatenate([y_train, y_dev])
+
 # %% [markdown]
 # #### Logistic Regression
 
 # %%
 hyperpars_lr = {
-    "max_iter":     [20, 50, 100, 150, 200, 500, 1000, 2000],
-    "penalty":      ["l1", "l2", "elasticnet", "none"],
+    "max_iter":     [20, 50, 100, 150, 200, 500],
+    "penalty":      ["l1", "l2"],
     "C":            [100, 10, 1.0, 0.1, 0.01],
     "class_weight": ["balanced", None],
     "solver":       ["newton-cg", "lbfgs", "liblinear", "sag", "saga"],   
 }
 
-folds = KFold(n_splits=4, shuffle=True, random_state=1)
+folds = KFold(n_splits=5, shuffle=True, random_state=1)
 log_reg_clf_2 = LogisticRegression()
 
 log_reg_grid_search = GridSearchCV(estimator=log_reg_clf_2, 
@@ -859,53 +866,52 @@ log_reg_grid_search = GridSearchCV(estimator=log_reg_clf_2,
                                    cv=folds, 
                                    n_jobs=-1)
 
-log_reg_grid_search.fit(X_train_scaled, y_train)
+log_reg_grid_search.fit(X_scaled, y)
 
 
 # %%
-best_score_lg = log_reg_grid_search.best_score_
-best_hyperparams_lg = log_reg_grid_search.best_params_
+best_score_log_reg          = log_reg_grid_search.best_score_
+best_hyperparams_log_reg    = log_reg_grid_search.best_params_
 
-best_hyperparams_lg, best_score_lg
+best_hyperparams_log_reg, best_score_log_reg
 
 
 # %%
-log_reg_clf_2 = LogisticRegression(**best_hyperparams_lg)
+log_reg_clf_2 = LogisticRegression(**best_hyperparams_log)
 log_reg_clf_2.fit(X_train_scaled, y_train)
 
-y_pred_log_2 = log_reg_clf_2.predict(X_dev_scaled)
+y_pred_log_reg_2 = log_reg_clf_2.predict(X_dev_scaled)
 
 # %%
-get_confussion_matrix(y_dev, y_pred_log_2)
+get_confussion_matrix(y_dev, y_pred_log_reg_2)
 
-plt.title("Comfusion Matrix for Logistic Regression", fontsize=15)
+plt.title("Comfusion Matrix for Tuned Logistic Regression", fontsize=15)
 plt.show()
 
 # %%
-accuracy_logreg_2, recal_logreg_2, precision_logreg_2, fi_logreg_2 = get_model_score_stats(y_dev, y_pred_log_2)
-accuracy_logreg_2, recal_logreg_2, precision_logreg_2, fi_logreg_2
+accuracy_log_reg_2, recal_log_reg_2, precision_log_reg_2, fi_log_reg_2 = get_model_score_stats(y_dev, y_pred_log_reg_2)
+accuracy_log_reg_2, recal_log_reg_2, precision_log_reg_2, fi_log_reg_2
 
 # %% [markdown]
 # #### KNN
 
 # %%
 hyperpars_knn = {
-    "n_neighbors":  list(range(1, 30)),
-    "leaf_size":    list(range(1, 35)),
+    "n_neighbors":  list(range(1, 8)),
+    "leaf_size":    list(range(20, 40)),
     "p":            [1, 2],
-    # "weights":      ["uniform", "distance"],   
-    # "algorithm":    ["auto", "ball_tree", "kd_tree", "brute"],
 }
 
-folds = KFold(n_splits=4, shuffle=True, random_state=1)
+folds = KFold(n_splits=5, shuffle=True, random_state=1)
 
 knn_grid_search = GridSearchCV(estimator=KNeighborsClassifier(), 
                                    param_grid=hyperpars_knn, 
                                    verbose=1, 
                                    cv=folds, 
-                                   n_jobs=-1)
+                                   n_jobs=-1,
+                                   )
 
-knn_grid_search.fit(X_train_scaled, y_train)
+knn_grid_search.fit(X_scaled, y)
 
 
 # %%
@@ -924,7 +930,7 @@ y_pred_knn_2 = knn_clf_2.predict(X_dev_scaled)
 # %%
 get_confussion_matrix(y_dev, y_pred_knn_2)
 
-plt.title("Comfusion Matrix for Logistic Regression", fontsize=15)
+plt.title("Comfusion Matrix for Tuned K Nearest Neighbors", fontsize=15)
 plt.show()
 
 # %%
@@ -935,47 +941,135 @@ accuracy_knn_2, recal_knn_2, precision_knn_2, fi_knn_2
 # #### SVM
 
 # %%
-hyperpars_knn = {
-    "n_neighbors":  list(range(1, 30)),
-    "leaf_size":    list(range(1, 35)),
-    "p":            [1, 2],
-    # "weights":      ["uniform", "distance"],   
-    # "algorithm":    ["auto", "ball_tree", "kd_tree", "brute"],
+hyperpars_svm = {
+    "C":        [1000, 100, 10, 1.0, 0.1],
+    # "gamma":    [1e-1, 1e-2, 1e-3, 1e-4],
 }
 
-folds = KFold(n_splits=4, shuffle=True, random_state=1)
+folds = KFold(n_splits=5, shuffle=True, random_state=1)
 
-knn_grid_search = GridSearchCV(estimator=KNeighborsClassifier(), 
-                                   param_grid=hyperpars_knn, 
+svm_grid_search = GridSearchCV(estimator=SVC(random_state=1), 
+                                   param_grid=hyperpars_svm, 
                                    verbose=1, 
                                    cv=folds, 
                                    n_jobs=-1)
 
-knn_grid_search.fit(X_train_scaled, y_train)
+svm_grid_search.fit(X_scaled, y)
 
 
 # %%
-best_score_knn = knn_grid_search.best_score_
-best_hyperparams_knn = knn_grid_search.best_params_
+best_score_svm = svm_grid_search.best_score_
+best_hyperparams_svm = svm_grid_search.best_params_
 
-best_hyperparams_knn, best_score_knn
+best_hyperparams_svm, best_score_svm
 
-
-# %%
-knn_clf_2 = KNeighborsClassifier(**best_hyperparams_knn)
-knn_clf_2.fit(X_train_scaled, y_train)
-
-y_pred_knn_2 = knn_clf_2.predict(X_dev_scaled)
 
 # %%
-get_confussion_matrix(y_dev, y_pred_knn_2)
+svm_clf_2 = SVC(**best_hyperparams_svm)
+svm_clf_2.fit(X_train_scaled, y_train)
 
-plt.title("Comfusion Matrix for Logistic Regression", fontsize=15)
+y_pred_svm_2 = svm_clf_2.predict(X_dev_scaled)
+
+# %%
+get_confussion_matrix(y_dev, y_pred_svm_2)
+
+plt.title("Comfusion Matrix for Tuned Scaler Vector Classifier", fontsize=15)
 plt.show()
 
 # %%
-accuracy_knn_2, recal_knn_2, precision_knn_2, fi_knn_2 = get_model_score_stats(y_dev, y_pred_knn_2)
-accuracy_knn_2, recal_knn_2, precision_knn_2, fi_knn_2
+accuracy_svm_2, recal_svm_2, precision_svm_2, fi_svm_2 = get_model_score_stats(y_dev, y_pred_svm_2)
+accuracy_svm_2, recal_svm_2, precision_svm_2, fi_svm_2
+
+# %% [markdown]
+# #### Decision Tree
+
+# %%
+hyperpars_dcn_tree = {
+    "criterion":    ["gini", "entropy"],
+    "splitter":     ["best", "random"],
+    "max_depth":    [*list(range(1, 10)), None],
+    # "min_samples_leafint":    [*list(range(1, 5))]
+}
+
+folds = KFold(n_splits=5, shuffle=True, random_state=1)
+
+dcn_tree_grid_search = GridSearchCV(estimator=DecisionTreeClassifier(random_state=1), 
+                                   param_grid=hyperpars_dcn_tree, 
+                                   verbose=1, 
+                                   cv=folds, 
+                                   n_jobs=-1)
+
+dcn_tree_grid_search.fit(X_scaled, y)
+
+
+# %%
+best_score_dcn_tree = dcn_tree_grid_search.best_score_
+best_hyperparams_dcn_tree = dcn_tree_grid_search.best_params_
+
+best_hyperparams_dcn_tree, best_score_dcn_tree
+
+
+# %%
+dcn_tree_clf_2 = DecisionTreeClassifier(**best_hyperparams_dcn_tree)
+dcn_tree_clf_2.fit(X_train_scaled, y_train)
+
+y_pred_dcn_tree_2 = dcn_tree_clf_2.predict(X_dev_scaled)
+
+# %%
+get_confussion_matrix(y_dev, y_pred_dcn_tree_2)
+
+plt.title("Comfusion Matrix for Tuned Decision Tree", fontsize=15)
+plt.show()
+
+# %%
+accuracy_dcn_tree_2, recal_dcn_tree_2, precision_dcn_tree_2, fi_dcn_tree_2 = get_model_score_stats(y_dev, y_pred_dcn_tree_2)
+accuracy_dcn_tree_2, recal_dcn_tree_2, precision_dcn_tree_2, fi_dcn_tree_2
+
+# %% [markdown]
+# #### Random Forest
+
+# %%
+hyperpars_rdm_fst = {
+    "n_estimators":     list(range(85, 100)),
+    "max_depth":        range(6, 9),
+    # "criterion":        ["gini", "entropy"],
+}
+
+folds = KFold(n_splits=5, shuffle=True, random_state=1)
+
+rdm_fst_grid_search = GridSearchCV(estimator=RandomForestClassifier(random_state=1), 
+                                   param_grid=hyperpars_rdm_fst, 
+                                   verbose=1, 
+                                   cv=folds, 
+                                   n_jobs=-1)
+
+rdm_fst_grid_search.fit(X_scaled, y)
+
+# %%
+best_score_rdm_fst = rdm_fst_grid_search.best_score_
+best_hyperparams_rdm_fst = rdm_fst_grid_search.best_params_
+
+best_hyperparams_rdm_fst, best_score_rdm_fst
+
+
+# %%
+rdm_fst_clf_2 = RandomForestClassifier(**best_hyperparams_rdm_fst ,random_state=0)
+rdm_fst_clf_2.fit(X_train_scaled, y_train)
+
+y_pred_rdm_fst_2 = rdm_fst_clf_2.predict(X_dev_scaled)
+
+# %%
+get_confussion_matrix(y_dev, y_pred_rdm_fst_2)
+
+plt.title("Comfusion Matrix for Tuned Random Forest", fontsize=15)
+plt.show()
+
+# %%
+accuracy_rdm_fst_2, recal_rdm_fst_2, precision_rdm_fst_2, fi_rdm_fst_2 = get_model_score_stats(y_dev, y_pred_rdm_fst_2)
+accuracy_rdm_fst_2, recal_rdm_fst_2, precision_rdm_fst_2, fi_rdm_fst_2
+
+# %%
+
 
 # %%
 
