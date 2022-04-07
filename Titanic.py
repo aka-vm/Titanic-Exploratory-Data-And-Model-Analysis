@@ -687,8 +687,8 @@ plt.title("Comfusion Matrix for Logistic Regression", fontsize=15)
 plt.show()
 
 # %%
-accuracy_logreg, recal_logreg, precision_logreg, fi_logreg = get_model_score_stats(y_dev, y_pred_log)
-accuracy_logreg, recal_logreg, precision_logreg, fi_logreg
+accuracy_log_reg, recal_log_reg, precision_log_reg, fi_log_reg = get_model_score_stats(y_dev, y_pred_log)
+accuracy_log_reg, recal_log_reg, precision_log_reg, fi_log_reg
 
 # %% [markdown]
 # #### Knn
@@ -750,8 +750,8 @@ plt.title("Comfusion Matrix for Decision Tree", fontsize=15)
 plt.show()
 
 # %%
-accuracy_dtree, recal_dtree, precision_dtree, fi_dtree = get_model_score_stats(y_dev, y_pred_dcn_tree)
-accuracy_dtree, recal_dtree, precision_dtree, fi_dtree
+accuracy_dcn_tree, recal_dcn_tree, precision_dcn_tree, fi_dcn_tree = get_model_score_stats(y_dev, y_pred_dcn_tree)
+accuracy_dcn_tree, recal_dcn_tree, precision_dcn_tree, fi_dcn_tree
 
 # %% [markdown]
 # #### Random Forest
@@ -771,8 +771,8 @@ plt.title("Comfusion Matrix for Random Forest", fontsize=15)
 plt.show()
 
 # %%
-accuracy_rforest, recal_rforest, precision_rforest, fi_rforest = get_model_score_stats(y_dev, y_pred_rdm_fst)
-accuracy_rforest, recal_rforest, precision_rforest, fi_rforest
+accuracy_rdm_fst, recal_rdm_fst, precision_rdm_fst, fi_rdm_fst = get_model_score_stats(y_dev, y_pred_rdm_fst)
+accuracy_rdm_fst, recal_rdm_fst, precision_rdm_fst, fi_rdm_fst
 
 # %% [markdown]
 # #### Naive Bayes
@@ -820,10 +820,10 @@ get_model_score_stats(y_dev, y_pred_ann)
 # %%
 model_comp_df = pd.DataFrame({
     "Model":            ["Log Reg", "KNN", "SVM", "Decision Tree", "Random Forest", "Naive Bayes"],
-    "Accuracy Score":   [accuracy_logreg, accuracy_knn, accuracy_svm, accuracy_dtree, accuracy_rforest, accuracy_nb],
-    "Recal":            [recal_logreg, recal_knn, recal_svm, recal_dtree, recal_rforest, recal_nb],
-    "Precision":        [precision_logreg, precision_knn, precision_svm, precision_dtree, precision_rforest, precision_nb],
-    "F1 Score":         [fi_logreg, fi_knn, fi_svm, fi_dtree, fi_rforest, fi_nb],
+    "Accuracy Score":   [accuracy_log_reg, accuracy_knn, accuracy_svm, accuracy_dcn_tree, accuracy_rdm_fst, accuracy_nb],
+    "Recal":            [recal_log_reg, recal_knn, recal_svm, recal_dcn_tree, recal_rdm_fst, recal_nb],
+    "Precision":        [precision_log_reg, precision_knn, precision_svm, precision_dcn_tree, precision_rdm_fst, precision_nb],
+    "F1 Score":         [fi_log_reg, fi_knn, fi_svm, fi_dcn_tree, fi_rdm_fst, fi_nb],
     
 })
 
@@ -877,7 +877,7 @@ best_hyperparams_log_reg, best_score_log_reg
 
 
 # %%
-log_reg_clf_2 = LogisticRegression(**best_hyperparams_log)
+log_reg_clf_2 = LogisticRegression(**best_hyperparams_log_reg)
 log_reg_clf_2.fit(X_train_scaled, y_train)
 
 y_pred_log_reg_2 = log_reg_clf_2.predict(X_dev_scaled)
@@ -943,7 +943,8 @@ accuracy_knn_2, recal_knn_2, precision_knn_2, fi_knn_2
 # %%
 hyperpars_svm = {
     "C":        [1000, 100, 10, 1.0, 0.1],
-    # "gamma":    [1e-1, 1e-2, 1e-3, 1e-4],
+    "gamma":    [1e-1, 1e-2, 1e-3, 1e-4],
+    "kernel":   ["linear", "poly", "rbf", "sigmoid"],
 }
 
 folds = KFold(n_splits=5, shuffle=True, random_state=1)
@@ -1031,7 +1032,7 @@ accuracy_dcn_tree_2, recal_dcn_tree_2, precision_dcn_tree_2, fi_dcn_tree_2
 # %%
 hyperpars_rdm_fst = {
     "n_estimators":     list(range(85, 100)),
-    "max_depth":        range(6, 9),
+    "max_depth":        range(6, 10),
     # "criterion":        ["gini", "entropy"],
 }
 
@@ -1068,10 +1069,63 @@ plt.show()
 accuracy_rdm_fst_2, recal_rdm_fst_2, precision_rdm_fst_2, fi_rdm_fst_2 = get_model_score_stats(y_dev, y_pred_rdm_fst_2)
 accuracy_rdm_fst_2, recal_rdm_fst_2, precision_rdm_fst_2, fi_rdm_fst_2
 
+# %% [markdown]
+# #### Model Comparison
+
+# %%
+model_comp_df_2 = pd.DataFrame({
+    "Model":            ["Log Reg Tuned", "KNN Tuned", "SVM Tuned", "Decision Tree Tuned", "Random Forest Tuned"],
+    "Accuracy Score":   [accuracy_log_reg_2, accuracy_knn_2, accuracy_svm_2, accuracy_dcn_tree_2, accuracy_rdm_fst_2],
+    "Recal":            [recal_log_reg_2, recal_knn_2, recal_svm_2, recal_dcn_tree_2, recal_rdm_fst_2],
+    "Precision":        [precision_log_reg_2, precision_knn_2, precision_svm_2, precision_dcn_tree_2, precision_rdm_fst_2],
+    "F1 Score":         [fi_log_reg_2, fi_knn_2, fi_svm_2, fi_dcn_tree_2, fi_rdm_fst_2],
+    
+})
+
+model_comp_df_2 = model_comp_df_2.sort_values(by="Accuracy Score", ascending=False)
+model_comp_df_2 = model_comp_df_2.set_index("Model")
+model_comp_df_2
+
+# %%
+model_comp_df_all = pd.concat([model_comp_df_2, model_comp_df])
+model_comp_df_all = model_comp_df_all.sort_values(by="Accuracy Score", ascending=False)
+
+model_comp_df_all
+
+# %%
+sns.heatmap(model_comp_df_all, annot=True, cmap="mako")
+plt.title("All Models Comparison Table", fontsize=15)
+
+# %%
+best_hyperparams_rdm_fst
+
+# %%
+df_test
+
+# %%
+final_model = SVC(**best_hyperparams_svm)
+final_model.fit(X_scaled, y)
+predictions = final_model.predict(X_test_scaled).astype(int)
+
+# output = pd.DataFrame({'PassengerId': (df_test.index+1), 'Survived': predictions})
+# output.to_csv('submission.csv', index=False)
+# print("Your submission was successfully saved!")
+
+# %%
+actual_result= pd.read_csv(submission_data_path).values[:, 1]
+
+actual_result.shape
+
+# %%
+get_confussion_matrix(actual_result, predictions)
+
+# %%
+get_model_score_stats(actual_result, predictions)
+
 # %%
 
 
 # %%
-
+time() - init_time
 
 
