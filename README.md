@@ -1,3 +1,3 @@
 # Titanic Exploratory Data And Model Analysis
 
-![score](score.png)
+![score](Rank.png)
